@@ -1,0 +1,11 @@
+{
+  "name": "lenta-dumper",
+  "description": "Dumper of the lenta.ru news",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "underscore": "1.x",
+    "mkdirp": "0.3.x",
+    "cheerio": "0.13.x"
+  }
+}
