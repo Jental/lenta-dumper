@@ -4,8 +4,8 @@ BASE_URL = 'http://lenta.ru'
 SECTION = 'news'
 OUT_DIR = 'out'
 INTERVAL = 200
-# START_DATE = Date.now()
-START_DATE = new Date 2008, 11, 14 # 11 - December
+START_DATE = Date.now()
+# START_DATE = new Date 2008, 11, 14 # 11 - December
 
 http    = require 'socks5-http-client'
 cheerio = require 'cheerio'
