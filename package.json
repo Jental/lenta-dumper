@@ -6,7 +6,7 @@
   "dependencies": {
     "underscore": "1.x",
     "mkdirp": "0.3.x",
-    "cheerio": "0.13.x"
-    "archiver": "0.7.x"
+    "cheerio": "0.13.x",
+    "archiver": "^0.8.1"
   }
 }

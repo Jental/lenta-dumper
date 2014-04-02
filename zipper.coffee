@@ -1,6 +1,6 @@
 #!/usr/bin/coffee
 
-IN_DIR = 'out'
+IN_DIR = 'out_test'
 OUT_DIR = 'zip'
 
 fs = require 'fs'
@@ -34,25 +34,36 @@ fs.readdir IN_DIR, (err, files) ->
       min: 9999
     }
 
+    inProgress = false
+
     [maxmin.min .. maxmin.max].map (year) ->
-      console.log year + ':'
-      paths = files
-      .map((file2) -> file2 + '/' + year)
-      .filter((file2Name) -> fs.existsSync IN_DIR + '/' + file2Name)
+      [1 .. 12].map (m) ->
+        month = ('0' + m).slice -2
 
-      output = fs.createWriteStream OUT_DIR + '/' + year + '.zip'
-      zip = archiver 'zip'
+        paths = files
+        .map((file2) -> file2 + '/' + year + '/' + month)
+        .filter((file2Name) -> fs.existsSync IN_DIR + '/' + file2Name)
 
-      output.on 'close', ->
-        console.log zip.pointer() + ' total bytes';
-      zip.on 'error', (err) ->
-        console.log err
-      zip.pipe output
+        if paths.length > 0
+          iv = setInterval ->
+            if not inProgress
+              inProgress = true
+              console.log year + '-' + month + ':'
+              output = fs.createWriteStream OUT_DIR + '/' + year + '-' + month + '.zip'
+              zip = archiver 'zip'
 
-      zip.bulk [{
-        expand: true
-        cwd: IN_DIR
-        src: paths.map((file2Name) -> file2Name + '/**')
-        # src: ['culture/2000/11/03/antique/**']
-      }]
-      zip.finalize()
+              output.on 'close', ->
+                console.log zip.pointer() + ' total bytes'
+                clearInterval iv
+                inProgress = false
+              zip.on 'error', (err) ->
+                console.log err
+              zip.pipe output
+
+              zip.bulk [{
+                expand: true
+                cwd: IN_DIR
+                src: paths.map((file2Name) -> file2Name + '/**')
+              }]
+              zip.finalize()
+          , 100
