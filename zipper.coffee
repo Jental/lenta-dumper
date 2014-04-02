@@ -1,11 +1,12 @@
 #!/usr/bin/coffee
 
-IN_DIR = 'out_test'
+IN_DIR = 'out'
 OUT_DIR = 'zip'
 
 fs = require 'fs'
 mkdirp  = require 'mkdirp'
-archiver = require 'archiver'
+spawn = require('child_process').spawn
+readline = require 'readline'
 
 mkdirp OUT_DIR
 
@@ -34,6 +35,9 @@ fs.readdir IN_DIR, (err, files) ->
       min: 9999
     }
 
+    baseDir = process.cwd()
+    process.chdir IN_DIR
+
     inProgress = false
 
     [maxmin.min .. maxmin.max].map (year) ->
@@ -42,28 +46,31 @@ fs.readdir IN_DIR, (err, files) ->
 
         paths = files
         .map((file2) -> file2 + '/' + year + '/' + month)
-        .filter((file2Name) -> fs.existsSync IN_DIR + '/' + file2Name)
+        .filter((file2Name) -> fs.existsSync file2Name)
 
         if paths.length > 0
           iv = setInterval ->
             if not inProgress
               inProgress = true
               console.log year + '-' + month + ':'
-              output = fs.createWriteStream OUT_DIR + '/' + year + '-' + month + '.zip'
-              zip = archiver 'zip'
 
-              output.on 'close', ->
-                console.log zip.pointer() + ' total bytes'
+              zipper = spawn '7z', ['a', "#{ baseDir }/#{ OUT_DIR }/#{ year }-#{ month }.zip"].concat(paths),
+                cwd: IN_DIR
+
+              zipper.on 'close', (code)->
+                console.log "finished with code #{ code }"
                 clearInterval iv
                 inProgress = false
-              zip.on 'error', (err) ->
-                console.log err
-              zip.pipe output
-
-              zip.bulk [{
-                expand: true
-                cwd: IN_DIR
-                src: paths.map((file2Name) -> file2Name + '/**')
-              }]
-              zip.finalize()
+              readline.createInterface
+                input: zipper.stdout
+                terminal: false
+              .on 'line', (line) ->
+                console.log line
+              readline.createInterface
+                input: zipper.stderr
+                terminal: false
+              .on 'line', (line) ->
+                console.log 'Error: ', line
           , 100
+
+    process.chdir baseDir
